@@ -1,164 +1,352 @@
+
+html
+Copy code
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-  <meta charset="UTF-8" />
-  <title>AI Loan Customer Demo (Multiple Scenarios)</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Loan Assistant</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+    <style>
+        /* Background and Global Styling */
+        body {
+            background: linear-gradient(to bottom right, #e8edf1, #d3e0e5);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: #333;
+            min-height: 100vh;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .container {
+            background: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            padding: 2rem;
+            max-width: 1100px;
+            width: 100%;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #4a4a4a;
+        }
+
+        .header p {
+            font-size: 1rem;
+            color: #7d7d7d;
+        }
+
+        /* Grid Layout */
+        .grid-container {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 2rem;
+        }
+
+        /* Left Panel */
+        .control-panel {
+            background: #f9f9f9;
+            border-radius: 10px;
+            padding: 1.5rem;
+            border: 1px solid #e0e0e0;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: #555;
+        }
+
+        select, textarea, button {
+            width: 100%;
+            padding: 0.8rem;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+            font-size: 1rem;
+            color: #333;
+            margin-bottom: 1rem;
+            background: #fff;
+            transition: box-shadow 0.3s ease-in-out;
+        }
+
+        select:focus, textarea:focus, button:focus {
+            outline: none;
+            box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+        }
+
+        button {
+            background: #007bff;
+            color: #fff;
+            font-weight: bold;
+            cursor: pointer;
+            border: none;
+        }
+
+        button:hover {
+            background: #0056b3;
+        }
+
+        textarea {
+            resize: none;
+        }
+
+        .flex-btns {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .btn-green {
+            background: #28a745;
+            color: #fff;
+        }
+
+        .btn-green:hover {
+            background: #1e7e34;
+        }
+
+        .btn-red {
+            background: #dc3545;
+            color: #fff;
+        }
+
+        .btn-red:hover {
+            background: #a71d2a;
+        }
+
+        /* Right Panel */
+        .chat-panel {
+            background: #f9f9f9;
+            border-radius: 10px;
+            padding: 1.5rem;
+            border: 1px solid #e0e0e0;
+        }
+
+        .chat-box {
+            max-height: 400px;
+            overflow-y: auto;
+            background: #ffffff;
+            padding: 1rem;
+            border-radius: 8px;
+            border: 1px solid #e0e0e0;
+            margin-bottom: 1rem;
+        }
+
+        .chat-box::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .chat-box::-webkit-scrollbar-thumb {
+            background: #ccc;
+            border-radius: 10px;
+        }
+
+        .chat-message {
+            margin-bottom: 1rem;
+            padding: 0.8rem;
+            border-radius: 8px;
+            line-height: 1.5;
+            font-size: 0.9rem;
+        }
+
+        .chat-message.user {
+            background: #007bff;
+            color: white;
+            text-align: right;
+        }
+
+        .chat-message.assistant {
+            background: #e9ecef;
+            color: #333;
+        }
+    </style>
 </head>
+
 <body>
-  <h1>AI Voice Bot: Loan Customer</h1>
+    <div class="container">
+        <!-- Header Section -->
+        <div class="header">
+            <h1>AI Loan Assistant</h1>
+            <p>Your Professional Financial Guide</p>
+        </div>
 
-  <!-- Scenario Selection Section -->
-  <div>
-    <label for="scenarioSelect">Choose a Scenario:</label>
-    <select id="scenarioSelect">
-      <option value="personalLoan">Personal Loan</option>
-      <option value="carLoan">Car Loan</option>
-      <option value="bikeLoan">Bike Loan</option>
-      <option value="homeLoan">Home Loan</option>
-      <option value="businessLoan">Business Loan</option>
-      <option value="mutualFund">Mutual Fund</option>
-      <option value="insurance">Insurance</option>
-    </select>
-    <button id="setScenarioBtn">Set Scenario</button>
-  </div>
+        <!-- Main Grid -->
+        <div class="grid-container">
+            <!-- Left Panel -->
+            <div class="control-panel">
+                <label for="scenarioSelect">Choose Scenario</label>
+                <select id="scenarioSelect">
+                    <option value="personalLoan">Personal Loan</option>
+                    <option value="carLoan">Car Loan</option>
+                    <option value="bikeLoan">Bike Loan</option>
+                    <option value="homeLoan">Home Loan</option>
+                    <option value="businessLoan">Business Loan</option>
+                    <option value="mutualFund">Mutual Fund</option>
+                    <option value="insurance">Insurance</option>
+                </select>
 
-  <!-- Language and Voice Controls -->
-  <div style="margin-top: 1em;">
-    <select id="languageOptions">
-      <option value="en-IN" selected>English (India)</option>
-      <option value="hi-IN">Hindi (India)</option>
-      <option value="te-IN">Telugu (India)</option>
-      <option value="ta-IN">Tamil (India)</option>
-      <option value="kn-IN">Kannada (India)</option>
-    </select>
-    <button id="startMicBtn">Start Mic</button>
-    <button id="stopMicBtn" disabled>Stop Mic</button>
-  </div>
+                <label for="languageOptions">Select Language</label>
+                <select id="languageOptions">
+                    <option value="en-IN">English (India)</option>
+                    <option value="hi-IN">Hindi (India)</option>
+                    <option value="te-IN">Telugu (India)</option>
+                    <option value="ta-IN">Tamil (India)</option>
+                    <option value="kn-IN">Kannada (India)</option>
+                </select>
 
-  <div>
-    <textarea id="userText" rows="3" cols="80" placeholder="Type or speak something..."></textarea>
-    <br/>
-    <button id="sendBtn">Send (for typed input)</button>
-  </div>
+                <button id="setScenarioBtn">Set Scenario</button>
+                <div class="flex-btns">
+                    <button id="startMicBtn" class="btn-green">Start Voice</button>
+                    <button id="stopMicBtn" class="btn-red" disabled>Stop Voice</button>
+                </div>
+            </div>
 
-  <div id="conversation"
-       style="border:1px solid #ccc; padding:10px; width:600px; height:300px; overflow-y:auto;">
-  </div>
+            <!-- Right Panel -->
+            <div class="chat-panel">
+                <div id="conversation" class="chat-box">
+                    <!-- Chat Messages -->
+                </div>
+                <textarea id="userText" rows="4" placeholder="Type your message..."></textarea>
+                <button id="sendBtn">Send Message</button>
+            </div>
+        </div>
+    </div>
 
-  <script src="https://aka.ms/csspeech/jsbrowserpackageraw"></script>
-  <script>
-    let recognizer;
-    const startMicBtn = document.getElementById('startMicBtn');
-    const stopMicBtn = document.getElementById('stopMicBtn');
-    const userText = document.getElementById('userText');
-    const sendBtn = document.getElementById('sendBtn');
-    const conversationDiv = document.getElementById('conversation');
-    const scenarioSelect = document.getElementById('scenarioSelect');
-    const setScenarioBtn = document.getElementById('setScenarioBtn');
-    const languageOptions = document.getElementById('languageOptions');
+    <script src="https://aka.ms/csspeech/jsbrowserpackageraw"></script>
+    <script>
+        // Your existing JavaScript code remains the same
+        let recognizer;
+        const startMicBtn = document.getElementById('startMicBtn');
+        const stopMicBtn = document.getElementById('stopMicBtn');
+        const userText = document.getElementById('userText');
+        const sendBtn = document.getElementById('sendBtn');
+        const conversationDiv = document.getElementById('conversation');
+        const scenarioSelect = document.getElementById('scenarioSelect');
+        const setScenarioBtn = document.getElementById('setScenarioBtn');
+        const languageOptions = document.getElementById('languageOptions');
 
-    async function setupRecognizer() {
-      const response = await fetch('/api/token');
-      const { token, region } = await response.json();
+        async function setupRecognizer() {
+            const response = await fetch('/api/token');
+            const { token, region } = await response.json();
 
-      const speechConfig = SpeechSDK.SpeechConfig.fromAuthorizationToken(token, region);
-      speechConfig.speechRecognitionLanguage = languageOptions.value;
+            const speechConfig = SpeechSDK.SpeechConfig.fromAuthorizationToken(token, region);
+            speechConfig.speechRecognitionLanguage = languageOptions.value;
 
-      const audioConfig = SpeechSDK.AudioConfig.fromDefaultMicrophoneInput();
-      recognizer = new SpeechSDK.SpeechRecognizer(speechConfig, audioConfig);
+            const audioConfig = SpeechSDK.AudioConfig.fromDefaultMicrophoneInput();
+            recognizer = new SpeechSDK.SpeechRecognizer(speechConfig, audioConfig);
 
-      recognizer.recognized = (s, e) => {
-        if (e.result.reason === SpeechSDK.ResultReason.RecognizedSpeech) {
-          userText.value = e.result.text;
-          sendTextToServer(e.result.text);
+            recognizer.recognized = (s, e) => {
+                if (e.result.reason === SpeechSDK.ResultReason.RecognizedSpeech) {
+                    userText.value = e.result.text;
+                    sendTextToServer(e.result.text);
+                }
+            };
+
+            recognizer.canceled = (s, e) => {
+                console.error('Recognition canceled:', e);
+            };
+
+            recognizer.sessionStopped = () => {
+                startMicBtn.disabled = false;
+                stopMicBtn.disabled = true;
+                recognizer.close();
+            };
         }
-      };
 
-      recognizer.canceled = (s, e) => {
-        console.error('Recognition canceled:', e);
-      };
-
-      recognizer.sessionStopped = () => {
-        startMicBtn.disabled = false;
-        stopMicBtn.disabled = true;
-        recognizer.close();
-      };
-    }
-
-    startMicBtn.addEventListener('click', async () => {
-      if (!recognizer) await setupRecognizer();
-      recognizer.startContinuousRecognitionAsync();
-      startMicBtn.disabled = true;
-      stopMicBtn.disabled = false;
-    });
-
-    stopMicBtn.addEventListener('click', () => {
-      recognizer.stopContinuousRecognitionAsync();
-      startMicBtn.disabled = false;
-      stopMicBtn.disabled = true;
-    });
-
-    setScenarioBtn.addEventListener('click', async () => {
-      const selectedScenario = scenarioSelect.value;
-      try {
-        const resp = await fetch('/api/clearHistory', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ scenario: selectedScenario })
+        // Event Listeners
+        startMicBtn.addEventListener('click', async () => {
+            if (!recognizer) await setupRecognizer();
+            recognizer.startContinuousRecognitionAsync();
+            startMicBtn.disabled = true;
+            stopMicBtn.disabled = false;
         });
-        const data = await resp.json();
-        document.getElementById('conversation').innerHTML = '';
-        console.log(data.message);
-      } catch (err) {
-        console.error('Failed to set scenario:', err);
-      }
-    });
 
-    sendBtn.addEventListener('click', async () => {
-      const text = userText.value.trim();
-      if (!text) return;
-      sendTextToServer(text);
-    });
+        stopMicBtn.addEventListener('click', () => {
+            recognizer.stopContinuousRecognitionAsync();
+            startMicBtn.disabled = false;
+            stopMicBtn.disabled = true;
+        });
 
-    async function sendTextToServer(text) {
-  const language = languageOptions.value;
-  
-  try {
-    const response = await fetch('/api/ask', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ 
-        userInput: text,
-        language: language 
-      }),
-    });
-        const data = await response.json();
+        setScenarioBtn.addEventListener('click', async () => {
+            const selectedScenario = scenarioSelect.value;
+            try {
+                const resp = await fetch('/api/clearHistory', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ scenario: selectedScenario })
+                });
+                const data = await resp.json();
+                conversationDiv.innerHTML = '';
+                console.log(data.message);
+            } catch (err) {
+                console.error('Failed to set scenario:', err);
+            }
+        });
 
-        if (data.error) {
-          addMessageToConversation('AI', `Error: ${data.error}`);
-        } else {
-          addMessageToConversation('customer', data.text);
-          if (data.audioContent) {
-            playBase64Audio(data.audioContent);
-          }
+        sendBtn.addEventListener('click', () => {
+            const text = userText.value.trim();
+            if (!text) return;
+            sendTextToServer(text);
+        });
+
+        async function sendTextToServer(text) {
+            const language = languageOptions.value;
+            addMessageToConversation('You', text);
+            userText.value = '';
+
+            try {
+                const response = await fetch('/api/ask', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        userInput: text,
+                        language: language 
+                    }),
+                });
+                const data = await response.json();
+
+                if (data.error) {
+                    addMessageToConversation('AI', `Error: ${data.error}`);
+                } else {
+                    addMessageToConversation('Assistant', data.text);
+                    if (data.audioContent) {
+                        playBase64Audio(data.audioContent);
+                    }
+                }
+            } catch (err) {
+                console.error(err);
+                addMessageToConversation('AI', 'Oops, something went wrong.');
+            }
         }
-      } catch (err) {
-        console.error(err);
-        addMessageToConversation('AI', 'Oops, something went wrong.');
-      }
-    }
 
-    function addMessageToConversation(sender, text) {
-      const p = document.createElement('p');
-      p.innerHTML = `<strong>${sender}:</strong> ${text}`;
-      conversationDiv.appendChild(p);
-      conversationDiv.scrollTop = conversationDiv.scrollHeight;
-    }
+        function addMessageToConversation(sender, text) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message p-3 mb-3 rounded-lg ' + 
+                (sender === 'You' ? 'bg-purple-600 bg-opacity-50 ml-8' : 'bg-blue-600 bg-opacity-50 mr-8');
+            messageDiv.innerHTML = `
+                <div class="font-medium mb-1">${sender}</div>
+                <div class="text-sm">${text}</div>
+            `;
+            conversationDiv.appendChild(messageDiv);
+            conversationDiv.scrollTop = conversationDiv.scrollHeight;
+        }
 
-    function playBase64Audio(base64) {
-      const audio = new Audio(`data:audio/mp3;base64,${base64}`);
-      audio.play();
-    }
-  </script>
+        function playBase64Audio(base64) {
+            const audio = new Audio(`data:audio/mp3;base64,${base64}`);
+            audio.play();
+        }
+    </script>
 </body>
 </html>
