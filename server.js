@@ -198,6 +198,10 @@ app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "index.html"));
 });
 
+app.get('/summary.html', (req, res) => {
+  res.sendFile(path.join(__dirname, 'summary.html'));
+});
+
 app.get('/api/token', async (req, res) => {
   try {
     const response = await axios({
@@ -244,6 +248,46 @@ app.post('/api/ask', async (req, res) => {
     res.json({ text: aiText, audioContent: audioBase64 });
   } catch (error) {
     console.error('Error in /api/ask:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post('/api/analyzeConversation', async (req, res) => {
+  try {
+    // Filter out the initial scenario prompt
+    const actualConversation = conversationHistory.slice(1);
+    
+    // Prepare analysis prompt
+    const analysisPrompt = `
+      Analyze the following customer service conversation and provide a detailed evaluation:
+      
+      Conversation History:
+      ${actualConversation.map(msg => `${msg.role}: ${msg.content}`).join('\n')}
+      
+      Please provide a detailed analysis including:
+      1. Language Quality (grammar, vocabulary, clarity) - Rate from 1-10
+      2. Communication Skills (politeness, effectiveness) - Rate from 1-10
+      3. Task Completion (how well they achieved their goal) - Rate from 1-10
+      4. Overall Approach (professionalism, engagement) - Rate from 1-10
+      
+      Also provide:
+      - Key strengths
+      - Areas for improvement
+      - Overall summary
+      
+      Format the response in a structured way with clear headings and ratings.
+    `;
+
+    const request = {
+      contents: [{ role: 'user', parts: [{ text: analysisPrompt }] }],
+    };
+
+    const result = await model.generateContent(request);
+    const analysis = result.response.candidates[0].content.parts[0].text;
+
+    res.json({ analysis });
+  } catch (error) {
+    console.error('Analysis Error:', error);
     res.status(500).json({ error: error.message });
   }
 });
