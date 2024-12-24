@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>AI Loan Customer Demo</title>
+</head>
+<body>
+  <h1>AI Voice Bot: Loan Customer</h1>
+
+  <div>
+    <button id="startMicBtn">Start Mic</button>
+    <button id="stopMicBtn" disabled>Stop Mic</button>
+  </div>
+
+  <div>
+    <textarea id="userText" rows="3" cols="80" placeholder="Type or speak something..."></textarea>
+    <br/>
+    <button id="sendBtn">Send (for typed input)</button>
+  </div>
+
+  <div id="conversation"
+       style="border:1px solid #ccc; padding:10px; width:600px; height:300px; overflow-y:auto;">
+    <!-- conversation updates here -->
+  </div>
+
+  <script>
+    // ====== Web Speech API (STT) Setup ======
+    let recognition;
+    if ('webkitSpeechRecognition' in window) {
+      recognition = new webkitSpeechRecognition();
+      recognition.continuous = false;
+      recognition.interimResults = false;
+      recognition.lang = 'en-US'; // or 'en-IN' etc.
+    } else {
+      alert('Web Speech API not supported in this browser. Use Chrome/Edge on HTTPS or localhost.');
+    }
+
+    const startMicBtn = document.getElementById('startMicBtn');
+    const stopMicBtn = document.getElementById('stopMicBtn');
+    const userText = document.getElementById('userText');
+    const sendBtn = document.getElementById('sendBtn');
+    const conversationDiv = document.getElementById('conversation');
+
+    // This function sends text to the server exactly like the "Send" button does.
+    async function sendTextToServer(text) {
+      addMessageToConversation('You', text);
+      userText.value = '';
+
+      try {
+        const response = await fetch('/api/ask', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userInput: text }),
+        });
+        const data = await response.json();
+
+        if (data.error) {
+          addMessageToConversation('AI', `Error: ${data.error}`);
+        } else {
+          // Display AI text
+          addMessageToConversation('Kumar', data.text);
+
+          // If there's TTS audio, play it
+          if (data.audioContent) {
+            playBase64Audio(data.audioContent);
+          }
+        }
+      } catch (err) {
+        console.error(err);
+        addMessageToConversation('AI', 'Oops, something went wrong.');
+      }
+    }
+
+    // When user clicks "Send," use typed input
+    sendBtn.addEventListener('click', async () => {
+      const text = userText.value.trim();
+      if (!text) return;
+      sendTextToServer(text);
+    });
+
+    // If STT is supported, set up events
+    if (recognition) {
+      startMicBtn.addEventListener('click', () => {
+        recognition.start();
+        startMicBtn.disabled = true;
+        stopMicBtn.disabled = false;
+      });
+
+      stopMicBtn.addEventListener('click', () => {
+        recognition.stop();
+        startMicBtn.disabled = false;
+        stopMicBtn.disabled = true;
+      });
+
+      recognition.onresult = (event) => {
+        const transcript = event.results[0][0].transcript;
+        userText.value = transcript;
+      };
+
+      recognition.onerror = (event) => {
+        console.error('Speech recognition error:', event);
+      };
+
+      // ====== KEY PART: auto-send the recognized text on end ======
+      recognition.onend = () => {
+        stopMicBtn.disabled = true;
+        startMicBtn.disabled = false;
+
+        // If there's recognized text, auto-send it
+        const text = userText.value.trim();
+        if (text) {
+          sendTextToServer(text);
+        }
+      };
+    }
+
+    // Utility: display a message in conversation div
+    function addMessageToConversation(sender, text) {
+      const p = document.createElement('p');
+      p.innerHTML = `<strong>${sender}:</strong> ${text}`;
+      conversationDiv.appendChild(p);
+      conversationDiv.scrollTop = conversationDiv.scrollHeight;
+    }
+
+    // Utility: play base64 MP3
+    function playBase64Audio(base64) {
+      const audio = new Audio(`data:audio/mp3;base64,${base64}`);
+      audio.play();
+    }
+  </script>
+</body>
+</html>
