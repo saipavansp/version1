@@ -2,12 +2,35 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>AI Loan Customer Demo</title>
+  <title>AI Loan Customer Demo (Multiple Scenarios)</title>
 </head>
 <body>
   <h1>AI Voice Bot: Loan Customer</h1>
 
+  <!-- Scenario Selection Section -->
   <div>
+    <label for="scenarioSelect">Choose a Scenario:</label>
+    <select id="scenarioSelect">
+      <option value="personalLoan">Personal Loan</option>
+      <option value="carLoan">Car Loan</option>
+      <option value="bikeLoan">Bike Loan</option>
+      <option value="homeLoan">Home Loan</option>
+      <option value="businessLoan">Business Loan</option>
+      <option value="mutualFund">Mutual Fund</option>
+      <option value="insurance">Insurance</option>
+    </select>
+    <button id="setScenarioBtn">Set Scenario</button>
+  </div>
+
+  <!-- Language and Voice Controls -->
+  <div style="margin-top: 1em;">
+    <select id="languageOptions">
+      <option value="en-IN" selected>English (India)</option>
+      <option value="hi-IN">Hindi (India)</option>
+      <option value="te-IN">Telugu (India)</option>
+      <option value="ta-IN">Tamil (India)</option>
+      <option value="kn-IN">Kannada (India)</option>
+    </select>
     <button id="startMicBtn">Start Mic</button>
     <button id="stopMicBtn" disabled>Stop Mic</button>
   </div>
@@ -20,47 +43,101 @@
 
   <div id="conversation"
        style="border:1px solid #ccc; padding:10px; width:600px; height:300px; overflow-y:auto;">
-    <!-- conversation updates here -->
   </div>
 
+  <script src="https://aka.ms/csspeech/jsbrowserpackageraw"></script>
   <script>
-    // ====== Web Speech API (STT) Setup ======
-    let recognition;
-    if ('webkitSpeechRecognition' in window) {
-      recognition = new webkitSpeechRecognition();
-      recognition.continuous = false;
-      recognition.interimResults = false;
-      recognition.lang = 'en-US'; // or 'en-IN' etc.
-    } else {
-      alert('Web Speech API not supported in this browser. Use Chrome/Edge on HTTPS or localhost.');
-    }
-
+    let recognizer;
     const startMicBtn = document.getElementById('startMicBtn');
     const stopMicBtn = document.getElementById('stopMicBtn');
     const userText = document.getElementById('userText');
     const sendBtn = document.getElementById('sendBtn');
     const conversationDiv = document.getElementById('conversation');
+    const scenarioSelect = document.getElementById('scenarioSelect');
+    const setScenarioBtn = document.getElementById('setScenarioBtn');
+    const languageOptions = document.getElementById('languageOptions');
 
-    // This function sends text to the server exactly like the "Send" button does.
-    async function sendTextToServer(text) {
-      addMessageToConversation('You', text);
-      userText.value = '';
+    async function setupRecognizer() {
+      const response = await fetch('/api/token');
+      const { token, region } = await response.json();
 
+      const speechConfig = SpeechSDK.SpeechConfig.fromAuthorizationToken(token, region);
+      speechConfig.speechRecognitionLanguage = languageOptions.value;
+
+      const audioConfig = SpeechSDK.AudioConfig.fromDefaultMicrophoneInput();
+      recognizer = new SpeechSDK.SpeechRecognizer(speechConfig, audioConfig);
+
+      recognizer.recognized = (s, e) => {
+        if (e.result.reason === SpeechSDK.ResultReason.RecognizedSpeech) {
+          userText.value = e.result.text;
+          sendTextToServer(e.result.text);
+        }
+      };
+
+      recognizer.canceled = (s, e) => {
+        console.error('Recognition canceled:', e);
+      };
+
+      recognizer.sessionStopped = () => {
+        startMicBtn.disabled = false;
+        stopMicBtn.disabled = true;
+        recognizer.close();
+      };
+    }
+
+    startMicBtn.addEventListener('click', async () => {
+      if (!recognizer) await setupRecognizer();
+      recognizer.startContinuousRecognitionAsync();
+      startMicBtn.disabled = true;
+      stopMicBtn.disabled = false;
+    });
+
+    stopMicBtn.addEventListener('click', () => {
+      recognizer.stopContinuousRecognitionAsync();
+      startMicBtn.disabled = false;
+      stopMicBtn.disabled = true;
+    });
+
+    setScenarioBtn.addEventListener('click', async () => {
+      const selectedScenario = scenarioSelect.value;
       try {
-        const response = await fetch('/api/ask', {
+        const resp = await fetch('/api/clearHistory', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ userInput: text }),
+          body: JSON.stringify({ scenario: selectedScenario })
         });
+        const data = await resp.json();
+        document.getElementById('conversation').innerHTML = '';
+        console.log(data.message);
+      } catch (err) {
+        console.error('Failed to set scenario:', err);
+      }
+    });
+
+    sendBtn.addEventListener('click', async () => {
+      const text = userText.value.trim();
+      if (!text) return;
+      sendTextToServer(text);
+    });
+
+    async function sendTextToServer(text) {
+  const language = languageOptions.value;
+  
+  try {
+    const response = await fetch('/api/ask', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ 
+        userInput: text,
+        language: language 
+      }),
+    });
         const data = await response.json();
 
         if (data.error) {
           addMessageToConversation('AI', `Error: ${data.error}`);
         } else {
-          // Display AI text
-          addMessageToConversation('Kumar', data.text);
-
-          // If there's TTS audio, play it
+          addMessageToConversation('customer', data.text);
           if (data.audioContent) {
             playBase64Audio(data.audioContent);
           }
@@ -71,50 +148,6 @@
       }
     }
 
-    // When user clicks "Send," use typed input
-    sendBtn.addEventListener('click', async () => {
-      const text = userText.value.trim();
-      if (!text) return;
-      sendTextToServer(text);
-    });
-
-    // If STT is supported, set up events
-    if (recognition) {
-      startMicBtn.addEventListener('click', () => {
-        recognition.start();
-        startMicBtn.disabled = true;
-        stopMicBtn.disabled = false;
-      });
-
-      stopMicBtn.addEventListener('click', () => {
-        recognition.stop();
-        startMicBtn.disabled = false;
-        stopMicBtn.disabled = true;
-      });
-
-      recognition.onresult = (event) => {
-        const transcript = event.results[0][0].transcript;
-        userText.value = transcript;
-      };
-
-      recognition.onerror = (event) => {
-        console.error('Speech recognition error:', event);
-      };
-
-      // ====== KEY PART: auto-send the recognized text on end ======
-      recognition.onend = () => {
-        stopMicBtn.disabled = true;
-        startMicBtn.disabled = false;
-
-        // If there's recognized text, auto-send it
-        const text = userText.value.trim();
-        if (text) {
-          sendTextToServer(text);
-        }
-      };
-    }
-
-    // Utility: display a message in conversation div
     function addMessageToConversation(sender, text) {
       const p = document.createElement('p');
       p.innerHTML = `<strong>${sender}:</strong> ${text}`;
@@ -122,7 +155,6 @@
       conversationDiv.scrollTop = conversationDiv.scrollHeight;
     }
 
-    // Utility: play base64 MP3
     function playBase64Audio(base64) {
       const audio = new Audio(`data:audio/mp3;base64,${base64}`);
       audio.play();
